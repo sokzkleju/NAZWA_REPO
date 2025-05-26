@@ -1,11 +1,27 @@
-node_modules
-dist
-.DS_Store
-*.log
-node_modules
-dist
-*.log
-*.lock
-node_modules/
+# dependencies
+/node_modules
+
+# builds
+/dist
+/.vite
+
+# Vercel and Netlify
+.vercel
+.netlify
+
+# Electron build output
+build
+release
 *.exe
-dist/
+
+# system files
+.DS_Store
+Thumbs.db
+
+# logs and debug
+*.log
+npm-debug.log*
+
+# optional IDE
+.vscode
+.idea
