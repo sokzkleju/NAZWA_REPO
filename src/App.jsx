@@ -2,14 +2,14 @@ import React, { useState, useEffect } from "react";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.js?url";
 import Tesseract from "tesseract.js";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [events, setEvents] = useState(() => JSON.parse(localStorage.getItem("events")) || []);
   const [text, setText] = useState("");
@@ -19,6 +19,30 @@ export default function App() {
   const [generatedQuiz, setGeneratedQuiz] = useState("");
   const [questionCount, setQuestionCount] = useState(3);
   const [affirmation, setAffirmation] = useState("");
+
+  const affirmations = [
+    "Dasz radę!",
+    "Mało ci zostało!",
+    "Jesteś silniejszy niż myślisz!",
+    "To tylko etap, przejdziesz przez to!",
+    "Zrobiłeś już bardzo dużo!",
+    "Jesteś na dobrej drodze!",
+    "Uwierz w siebie!",
+    "Każdy krok się liczy!",
+    "Możesz odpocząć i wrócić z siłą!",
+    "Twoje starania się opłacą!"
+  ];
+
+  const generateAffirmation = () => {
+    const random = affirmations[Math.floor(Math.random() * affirmations.length)];
+    setAffirmation(random);
+  };
+
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+  }, []);
 
   useEffect(() => {
     if (Notification.permission !== "granted") {
@@ -34,25 +58,10 @@ export default function App() {
           const eventTime = new Date(event.date);
           const reminderTime = new Date(eventTime.getTime() - 15 * 60 * 1000);
           const withinReminderWindow = now >= reminderTime && now < new Date(reminderTime.getTime() + 60000);
-
           if (withinReminderWindow && !event.notified) {
             const notificationWindow = window.open("", "notification", "width=400,height=200");
             if (notificationWindow) {
-              const notificationHtml = `
-                <html>
-                  <head>
-                    <title>⏰ Przypomnienie</title>
-                    <style>
-                      body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #1f2937; color: white; text-align: center; }
-                      h1 { font-size: 1.5rem; margin-bottom: 10px; }
-                      p { font-size: 1rem; background-color: #374151; padding: 10px; border-radius: 8px; }
-                    </style>
-                  </head>
-                  <body>
-                    <h1>⏰ Przypomnienie</h1>
-                    <p>${event.text}</p>
-                  </body>
-                </html>`;
+              const notificationHtml = `<html><head><title>⏰ Przypomnienie</title><style>body{margin:0;padding:20px;font-family:Arial,sans-serif;background-color:#1f2937;color:white;text-align:center}h1{font-size:1.5rem;margin-bottom:10px}p{font-size:1rem;background-color:#374151;padding:10px;border-radius:8px}</style></head><body><h1>⏰ Przypomnienie</h1><p>${event.text}</p></body></html>`;
               notificationWindow.document.write(notificationHtml);
               notificationWindow.focus();
             }
@@ -69,7 +78,7 @@ export default function App() {
 
   const handleRegister = async () => {
     try {
-      await createUserWithEmailAndPassword(auth, username, password);
+      await createUserWithEmailAndPassword(auth, email, password);
       alert("Zarejestrowano!");
     } catch (error) {
       alert("Błąd rejestracji: " + error.message);
@@ -78,27 +87,14 @@ export default function App() {
 
   const handleLogin = async () => {
     try {
-      await signInWithEmailAndPassword(auth, username, password);
-      setCurrentUser(username);
-      alert("Zalogowano!");
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
       alert("Błąd logowania: " + error.message);
     }
   };
 
-  const generateAffirmation = () => {
-    const affirmations = [
-      "Dasz radę!",
-      "Mało ci zostało!",
-      "Jesteś wystarczający!",
-      "Zrobisz to!",
-      "Dziś będzie dobry dzień!",
-      "Jesteś silniejszy niż myślisz!",
-      "Nie poddawaj się!",
-      "Twoja praca ma znaczenie!"
-    ];
-    const randomIndex = Math.floor(Math.random() * affirmations.length);
-    setAffirmation(affirmations[randomIndex]);
+  const handleLogout = async () => {
+    await signOut(auth);
   };
 
   if (!currentUser) {
@@ -106,7 +102,7 @@ export default function App() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm text-center">
           <h2 className="text-xl font-bold mb-4">🔐 Logowanie / Rejestracja</h2>
-          <input className="mb-2 p-2 rounded w-full bg-gray-700 text-white" placeholder="Email" value={username} onChange={e => setUsername(e.target.value)} />
+          <input className="mb-2 p-2 rounded w-full bg-gray-700 text-white" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
           <input type="password" className="mb-4 p-2 rounded w-full bg-gray-700 text-white" placeholder="Hasło" value={password} onChange={e => setPassword(e.target.value)} />
           <div className="flex gap-2 justify-center">
             <button className="bg-blue-600 px-4 py-2 rounded" onClick={handleLogin}>Zaloguj</button>
@@ -119,23 +115,27 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
-      <h1 className="text-2xl font-bold mb-4">👋 Witaj, {currentUser}</h1>
+      <div className="flex justify-between mb-4">
+        <h1 className="text-2xl font-bold">👋 Witaj, {currentUser.email}</h1>
+        <button onClick={handleLogout} className="bg-red-600 px-4 py-2 rounded">Wyloguj</button>
+      </div>
       <div className="flex gap-4 mb-4">
         <button onClick={() => setTab("calendar")} className={`px-4 py-2 rounded-t-lg ${tab === "calendar" ? "bg-blue-700" : "bg-gray-700"}`}>📅 Kalendarz</button>
-        <button onClick={() => setTab("quiz")} className={`px-4 py-2 rounded-t-lg ${tab === "quiz" ? "bg-blue-700" : "bg-gray-700"}`}>🧠 Quiz</button>
-        <button onClick={() => setTab("affirmations")} className={`px-4 py-2 rounded-t-lg ${tab === "affirmations" ? "bg-blue-700" : "bg-gray-700"}`}>💬 Pozytywne afirmacje</button>
+        <button onClick={() => setTab("quiz")} className={`px-4 py-2 rounded-t-lg ${tab === "quiz" ? "bg-blue-700" : "bg-gray-700"}`}>🧠 Quizy</button>
+        <button onClick={() => setTab("affirmations")} className={`px-4 py-2 rounded-t-lg ${tab === "affirmations" ? "bg-blue-700" : "bg-gray-700"}`}>🌞 Pozytywne afirmacje</button>
       </div>
-
       {tab === "affirmations" && (
-        <div className="bg-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">💬 Pozytywne afirmacje</h2>
-          <button onClick={generateAffirmation} className="bg-green-600 px-4 py-2 rounded mb-4">Wygeneruj afirmację</button>
-          {affirmation && <p className="text-lg mt-2 bg-blue-700 p-4 rounded">{affirmation}</p>}
+        <div className="bg-gray-800 p-6 rounded-lg text-center">
+          <h2 className="text-2xl font-semibold mb-4">Potrzebujesz wsparcia?</h2>
+          <button className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded mb-4" onClick={generateAffirmation}>💬 Wygeneruj afirmację</button>
+          {affirmation && <p className="text-lg mt-4 italic text-green-400">{affirmation}</p>}
         </div>
       )}
+      {/* Pozostałe sekcje np. quiz i kalendarz możesz wkleić tu niżej */}
     </div>
   );
 }
+
 
 
 
@@ -236,6 +236,8 @@ export default function App() {
           <div className="flex gap-4 mb-4">
             <button onClick={() => setTab("calendar")} className={`px-4 py-2 rounded-t-lg ${tab === "calendar" ? "bg-blue-700" : "bg-gray-700"}`}>📅 Kalendarz</button>
             <button onClick={() => setTab("quiz")} className={`px-4 py-2 rounded-t-lg ${tab === "quiz" ? "bg-blue-700" : "bg-gray-700"}`}>🧠 Generator quizów</button>
+              <button onClick={() => setTab("affirmations")} className={`px-4 py-2 rounded-t-lg ${tab === "affirmations" ? "bg-blue-700" : "bg-gray-700"}`}>🌞 Pozytywne afirmacje</button>
+
           </div>
 
           {tab === "calendar" && (
