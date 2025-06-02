@@ -1,0 +1,52 @@
+{
+  "name": "Kalendarz",
+  "short_name": "Kalendarz",
+  "description": "Aplikacja kalendarza z quizami i przypomnieniami",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1f2937",
+  "theme_color": "#1f2937",
+  "lang": "pl",
+  "dir": "ltr",
+  "categories": ["productivity", "calendar", "tools"],
+  "iarc_rating_id": "e10",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-640x640.png",
+      "sizes": "640x640",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-640x640-maskable.png",
+      "sizes": "640x640",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot1.png",
+      "type": "image/png",
+      "sizes": "1280x720"
+    },
+    {
+      "src": "/screenshot2.png",
+      "type": "image/png",
+      "sizes": "1280x720"
+    }
+  ],
+  "id": "/?source=pwa",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}

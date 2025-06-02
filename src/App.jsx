@@ -1,8 +1,144 @@
-// Wersja z pełnym interfejsem — pytania ABCD z jedną poprawną odpowiedzią, prawda/fałsz i otwarte
 import React, { useState, useEffect } from "react";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.js?url";
 import Tesseract from "tesseract.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "./firebase";
+
+GlobalWorkerOptions.workerSrc = pdfWorker;
+
+export default function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [events, setEvents] = useState(() => JSON.parse(localStorage.getItem("events")) || []);
+  const [text, setText] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [tab, setTab] = useState("calendar");
+  const [quizInput, setQuizInput] = useState("");
+  const [generatedQuiz, setGeneratedQuiz] = useState("");
+  const [questionCount, setQuestionCount] = useState(3);
+  const [affirmation, setAffirmation] = useState("");
+
+  useEffect(() => {
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date();
+      setEvents(previousEvents => {
+        const updatedEvents = previousEvents.map(event => {
+          const eventTime = new Date(event.date);
+          const reminderTime = new Date(eventTime.getTime() - 15 * 60 * 1000);
+          const withinReminderWindow = now >= reminderTime && now < new Date(reminderTime.getTime() + 60000);
+
+          if (withinReminderWindow && !event.notified) {
+            const notificationWindow = window.open("", "notification", "width=400,height=200");
+            if (notificationWindow) {
+              const notificationHtml = `
+                <html>
+                  <head>
+                    <title>⏰ Przypomnienie</title>
+                    <style>
+                      body { margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #1f2937; color: white; text-align: center; }
+                      h1 { font-size: 1.5rem; margin-bottom: 10px; }
+                      p { font-size: 1rem; background-color: #374151; padding: 10px; border-radius: 8px; }
+                    </style>
+                  </head>
+                  <body>
+                    <h1>⏰ Przypomnienie</h1>
+                    <p>${event.text}</p>
+                  </body>
+                </html>`;
+              notificationWindow.document.write(notificationHtml);
+              notificationWindow.focus();
+            }
+            return { ...event, notified: true };
+          }
+          return event;
+        });
+        localStorage.setItem("events", JSON.stringify(updatedEvents));
+        return updatedEvents;
+      });
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [events]);
+
+  const handleRegister = async () => {
+    try {
+      await createUserWithEmailAndPassword(auth, username, password);
+      alert("Zarejestrowano!");
+    } catch (error) {
+      alert("Błąd rejestracji: " + error.message);
+    }
+  };
+
+  const handleLogin = async () => {
+    try {
+      await signInWithEmailAndPassword(auth, username, password);
+      setCurrentUser(username);
+      alert("Zalogowano!");
+    } catch (error) {
+      alert("Błąd logowania: " + error.message);
+    }
+  };
+
+  const generateAffirmation = () => {
+    const affirmations = [
+      "Dasz radę!",
+      "Mało ci zostało!",
+      "Jesteś wystarczający!",
+      "Zrobisz to!",
+      "Dziś będzie dobry dzień!",
+      "Jesteś silniejszy niż myślisz!",
+      "Nie poddawaj się!",
+      "Twoja praca ma znaczenie!"
+    ];
+    const randomIndex = Math.floor(Math.random() * affirmations.length);
+    setAffirmation(affirmations[randomIndex]);
+  };
+
+  if (!currentUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-sm text-center">
+          <h2 className="text-xl font-bold mb-4">🔐 Logowanie / Rejestracja</h2>
+          <input className="mb-2 p-2 rounded w-full bg-gray-700 text-white" placeholder="Email" value={username} onChange={e => setUsername(e.target.value)} />
+          <input type="password" className="mb-4 p-2 rounded w-full bg-gray-700 text-white" placeholder="Hasło" value={password} onChange={e => setPassword(e.target.value)} />
+          <div className="flex gap-2 justify-center">
+            <button className="bg-blue-600 px-4 py-2 rounded" onClick={handleLogin}>Zaloguj</button>
+            <button className="bg-green-600 px-4 py-2 rounded" onClick={handleRegister}>Zarejestruj</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white p-4">
+      <h1 className="text-2xl font-bold mb-4">👋 Witaj, {currentUser}</h1>
+      <div className="flex gap-4 mb-4">
+        <button onClick={() => setTab("calendar")} className={`px-4 py-2 rounded-t-lg ${tab === "calendar" ? "bg-blue-700" : "bg-gray-700"}`}>📅 Kalendarz</button>
+        <button onClick={() => setTab("quiz")} className={`px-4 py-2 rounded-t-lg ${tab === "quiz" ? "bg-blue-700" : "bg-gray-700"}`}>🧠 Quiz</button>
+        <button onClick={() => setTab("affirmations")} className={`px-4 py-2 rounded-t-lg ${tab === "affirmations" ? "bg-blue-700" : "bg-gray-700"}`}>💬 Pozytywne afirmacje</button>
+      </div>
+
+      {tab === "affirmations" && (
+        <div className="bg-gray-800 rounded-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">💬 Pozytywne afirmacje</h2>
+          <button onClick={generateAffirmation} className="bg-green-600 px-4 py-2 rounded mb-4">Wygeneruj afirmację</button>
+          {affirmation && <p className="text-lg mt-2 bg-blue-700 p-4 rounded">{affirmation}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
 
