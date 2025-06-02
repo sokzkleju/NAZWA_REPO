@@ -234,11 +234,12 @@ export default function App() {
           </div>
 
           <div className="flex gap-4 mb-4">
-            <button onClick={() => setTab("calendar")} className={`px-4 py-2 rounded-t-lg ${tab === "calendar" ? "bg-blue-700" : "bg-gray-700"}`}>📅 Kalendarz</button>
-            <button onClick={() => setTab("quiz")} className={`px-4 py-2 rounded-t-lg ${tab === "quiz" ? "bg-blue-700" : "bg-gray-700"}`}>🧠 Generator quizów</button>
-              <button onClick={() => setTab("affirmations")} className={`px-4 py-2 rounded-t-lg ${tab === "affirmations" ? "bg-blue-700" : "bg-gray-700"}`}>🌞 Pozytywne afirmacje</button>
+  <button onClick={() => setTab("calendar")} className={`px-4 py-2 rounded-t-lg ${tab === "calendar" ? "bg-blue-700" : "bg-gray-700"}`}>📅 Kalendarz</button>
+  <button onClick={() => setTab("quiz")} className={`px-4 py-2 rounded-t-lg ${tab === "quiz" ? "bg-blue-700" : "bg-gray-700"}`}>🧠 Generator quizów</button>
+  <button onClick={() => setTab("affirmations")} className={`px-4 py-2 rounded-t-lg ${tab === "affirmations" ? "bg-blue-700" : "bg-gray-700"}`}>🌞 Afirmacje</button>
+</div>
 
-          </div>
+
 
           {tab === "calendar" && (
             <div className="flex gap-4">
@@ -282,6 +283,27 @@ export default function App() {
                   <input type="number" min={1} max={50} className="w-full p-2 rounded bg-gray-700 text-white" value={questionCount} onChange={e => setQuestionCount(Number(e.target.value))} />
                 </div>
               </div>
+              {tab === "affirmations" && (
+  <div className="bg-gray-800 rounded-lg p-6 text-center">
+    <h2 className="text-xl font-semibold mb-4">🌞 Potrzebujesz wsparcia?</h2>
+    <button onClick={() => {
+      const affirmations = [
+        "Dasz radę!",
+        "Jesteś na dobrej drodze!",
+        "Mało zostało!",
+        "Nie poddawaj się!",
+        "Widzisz postęp – to działa!",
+        "Jeszcze tylko chwila i koniec!"
+      ];
+      const random = affirmations[Math.floor(Math.random() * affirmations.length)];
+      setGeneratedQuiz(random);
+    }} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded">🎉 Kliknij po afirmację</button>
+    {generatedQuiz && (
+      <p className="mt-4 text-lg italic text-green-400">{generatedQuiz}</p>
+    )}
+  </div>
+)}
+
               <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={async e => {
                 const file = e.target.files[0];
                 if (!file) return;
