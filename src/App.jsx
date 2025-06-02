@@ -131,10 +131,11 @@ export default function App() {
           {affirmation && <p className="text-lg mt-4 italic text-green-400">{affirmation}</p>}
         </div>
       )}
-      {/* Pozostałe sekcje np. quiz i kalendarz możesz wkleić tu niżej */}
+      
     </div>
   );
 }
+
 
 
 
