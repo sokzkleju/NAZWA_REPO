@@ -31,7 +31,7 @@ export default function App() {
           if (withinReminder && !event.notified) {
             const win = window.open("", "notification", "width=400,height=200");
             if (win) {
-              win.document.write(\`<html><body style="background:#1f2937;color:white;padding:20px;text-align:center"><h1>⏰ Przypomnienie</h1><p>\${event.text}</p></body></html>\`);
+              win.document.write(`<html><body style="background:#1f2937;color:white;padding:20px;text-align:center"><h1>⏰ Przypomnienie</h1><p>${event.text}</p></body></html>`);
               win.focus();
             }
             return { ...event, notified: true };
@@ -58,9 +58,9 @@ export default function App() {
           </div>
 
           <div className="flex gap-4 mb-4">
-            <button onClick={() => setTab("calendar")} className={\`px-4 py-2 rounded-t-lg \${tab === "calendar" ? "bg-blue-700" : "bg-gray-700"}\`}>📅 Kalendarz</button>
-            <button onClick={() => setTab("quiz")} className={\`px-4 py-2 rounded-t-lg \${tab === "quiz" ? "bg-blue-700" : "bg-gray-700"}\`}>🧠 Generator quizów</button>
-            <button onClick={() => setTab("affirmations")} className={\`px-4 py-2 rounded-t-lg \${tab === "affirmations" ? "bg-blue-700" : "bg-gray-700"}\`}>🌞 Pozytywne afirmacje</button>
+            <button onClick={() => setTab("calendar")} className={`px-4 py-2 rounded-t-lg ${tab === "calendar" ? "bg-blue-700" : "bg-gray-700"}`}>📅 Kalendarz</button>
+            <button onClick={() => setTab("quiz")} className={`px-4 py-2 rounded-t-lg ${tab === "quiz" ? "bg-blue-700" : "bg-gray-700"}`}>🧠 Generator quizów</button>
+            <button onClick={() => setTab("affirmations")} className={`px-4 py-2 rounded-t-lg ${tab === "affirmations" ? "bg-blue-700" : "bg-gray-700"}`}>🌞 Pozytywne afirmacje</button>
           </div>
 
           {tab === "calendar" && (
@@ -104,7 +104,7 @@ export default function App() {
                 const questions = [];
                 for (let i = 0; i < questionCount; i++) {
                   const s = sentences[Math.floor(Math.random() * sentences.length)] || quizInput;
-                  questions.push(\`\${i + 1}. Co oznacza zdanie: "\${s}"?\`);
+                  questions.push(`${i + 1}. Co oznacza zdanie: "${s}"?`);
                 }
                 setGeneratedQuiz(questions.join("\n\n"));
               }}>🎯 Wygeneruj quiz</button>
